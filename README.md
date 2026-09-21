@@ -1,4 +1,4 @@
-# 🇸🇸 South Sudan Language AI
+# 🇸🇸 Nile AI
 
 > **One AI. Many South Sudanese languages. Preserving language, connecting people.**
 
