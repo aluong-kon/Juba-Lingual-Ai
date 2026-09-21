@@ -1,0 +1,6 @@
+{
+  "name": "JubaLingua AI",
+  "description": "South Sudan Language AI, Digital Language Archive, and Ingestion Platform featuring verified dictionaries, Dinka dialect varieties, Nuer Lexicon, multilingual knowledge graph, consented speech database, and coverage matrix.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
