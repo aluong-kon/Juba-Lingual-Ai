@@ -3,6 +3,7 @@ import { Navbar } from './components/Navbar';
 import { TranslateView } from './components/TranslateView';
 import { ConversationMode } from './components/ConversationMode';
 import { AIAssistantView } from './components/AIAssistantView';
+import { DinkaVoiceView } from './components/DinkaVoiceView';
 import { EmergencyMode } from './components/EmergencyMode';
 import { CommunityDictionary } from './components/CommunityDictionary';
 import { ValidationPortal } from './components/ValidationPortal';
@@ -131,6 +132,8 @@ export default function App() {
         )}
 
         {activeTab === 'assistant' && <AIAssistantView />}
+
+        {activeTab === 'dinka_voice' && <DinkaVoiceView />}
 
         {activeTab === 'emergency' && (
           <EmergencyMode

@@ -631,3 +631,30 @@ Language datasets may have different ownership, copyright, consent, and redistri
 **South Sudan Language AI**
 
 Built with a focus on **AI, data, language preservation, and community participation**.
+
+---
+
+## 🔊 Dinka Voice (speech service)
+
+The **Dinka Voice** tab is a hands-free voice assistant: speak Dinka (or English) and it answers out loud in Dinka.
+It runs on a local Python service in `speech-service/` that uses open Dinka models:
+
+| Task | Model / data |
+| ---- | ------------ |
+| Dinka speech → text | `facebook/mms-1b-all` (Dinka `dik` / `dip` adapters) |
+| Dinka text → speech | `facebook/mms-tts-dik`, `facebook/mms-tts-dip` |
+| English ↔ Dinka translation | Translation memory (81k English–Dinka pairs), then `facebook/nllb-200-distilled-600M` (`dik_Latn`) |
+| Reference corpus | `michsethowusu/english-southwestern-dinka_sentence-pairs_mt560` (CC-BY-4.0), `dayomtechnologies/English-Nuer-Dinka-Health-Translation-Dataset` (MIT) |
+
+```bash
+python3 -m venv ~/venvs/dinka
+~/venvs/dinka/bin/pip install -r speech-service/requirements.txt   # needs ffmpeg on PATH
+~/venvs/dinka/bin/python speech-service/download_dinka_data.py       # writes speech-service/data/dinka_corpus.jsonl
+cd speech-service && ~/venvs/dinka/bin/uvicorn app:app --host 127.0.0.1 --port 8000
+```
+
+Then run the web app (`npm run dev`) with `GEMINI_API_KEY` set; it talks to the speech service at `SPEECH_SERVICE_URL`
+(default `http://127.0.0.1:8000`). Any `/api/tts` request for a Dinka language now uses the native Dinka voice,
+falling back to Gemini TTS if the service is down.
+
+Machine-translated Dinka is labelled "unverified" in the UI and should be reviewed by native speakers.
