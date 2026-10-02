@@ -150,6 +150,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             { id: 'speech_database', label: 'Consented Speech', icon: Radio },
             { id: 'conversation', label: 'Live Conversation', icon: MessagesSquare },
             { id: 'assistant', label: 'AI Assistant', icon: Bot },
+            { id: 'dinka_voice', label: 'Dinka Voice', icon: Radio },
             { id: 'emergency', label: 'Emergency Mode', icon: AlertTriangle, highlight: true },
             { id: 'dictionary', label: 'Community Dictionary', icon: BookOpen },
             { id: 'validation', label: 'Validation Queue', icon: ShieldCheck },

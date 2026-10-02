@@ -29,6 +29,60 @@ import {
 dotenv.config();
 
 const PORT = 3000;
+const SPEECH_SERVICE_URL = (process.env.SPEECH_SERVICE_URL || 'http://127.0.0.1:8000').replace(/\/$/, '');
+
+type DinkaVariety = 'dik' | 'dip';
+type ChatTurn = { role: 'user' | 'model'; text: string };
+
+function dinkaVarietyFor(languageOrDialectId?: string): DinkaVariety {
+  return languageOrDialectId?.includes('northeastern') || languageOrDialectId === 'dip' ? 'dip' : 'dik';
+}
+
+async function speechService<T>(pathname: string, init: RequestInit): Promise<T> {
+  const res = await fetch(`${SPEECH_SERVICE_URL}${pathname}`, init);
+  if (!res.ok) {
+    throw new Error(`Speech service ${pathname} failed (${res.status}): ${await res.text()}`);
+  }
+  return (await res.json()) as T;
+}
+
+async function dinkaTranslate(text: string, source: 'english' | 'dinka', target: 'english' | 'dinka') {
+  return speechService<{ translation: string; engine: string; source: string }>('/translate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, source, target }),
+  });
+}
+
+async function dinkaSpeak(text: string, variety: DinkaVariety): Promise<string> {
+  const res = await fetch(`${SPEECH_SERVICE_URL}/tts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, variety }),
+  });
+  if (!res.ok) {
+    throw new Error(`Speech service /tts failed (${res.status}): ${await res.text()}`);
+  }
+  return Buffer.from(await res.arrayBuffer()).toString('base64');
+}
+
+async function dinkaTranscribe(audioBase64: string, mimeType: string, variety: DinkaVariety): Promise<string> {
+  const form = new FormData();
+  form.append('file', new Blob([Buffer.from(audioBase64, 'base64')], { type: mimeType }), 'speech');
+  form.append('variety', variety);
+  const data = await speechService<{ text: string }>('/asr', { method: 'POST', body: form });
+  return data.text;
+}
+
+function toGeminiContents(history: ChatTurn[], message: string) {
+  return [
+    ...history
+      .filter((turn) => turn && (turn.role === 'user' || turn.role === 'model') && typeof turn.text === 'string')
+      .slice(-12)
+      .map((turn) => ({ role: turn.role, parts: [{ text: turn.text }] })),
+    { role: 'user', parts: [{ text: message }] },
+  ];
+}
 
 // Lazy initialization of Gemini client
 let geminiClient: GoogleGenAI | null = null;
@@ -780,6 +834,16 @@ Respond strictly in JSON format:
         return;
       }
 
+      if (typeof languageId === 'string' && languageId.startsWith('dinka')) {
+        try {
+          const audioBase64 = await dinkaSpeak(text, dinkaVarietyFor(languageId));
+          res.json({ audioBase64, mimeType: 'audio/wav', text, voice: 'mms-tts-dinka' });
+          return;
+        } catch (dinkaErr: any) {
+          console.warn('Dinka speech service unavailable, falling back to Gemini TTS:', dinkaErr?.message);
+        }
+      }
+
       const ai = getGemini();
 
       // Available prebuilt voices: 'Kore', 'Puck', 'Charon', 'Fenrir', 'Zephyr'
@@ -857,7 +921,7 @@ Format your responses with clear markdown headers, bold pronunciation cues, and 
 
       const response = await ai.models.generateContent({
         model: 'gemini-3.8-flash',
-        contents: message,
+        contents: toGeminiContents(Array.isArray(history) ? history : [], message),
         config: {
           systemInstruction,
           temperature: 0.3,
@@ -870,6 +934,122 @@ Format your responses with clear markdown headers, bold pronunciation cues, and 
     } catch (error: any) {
       console.error('Assistant error:', error);
       res.status(500).json({ error: 'Assistant failed', details: error?.message });
+    }
+  });
+
+  // Dinka voice assistant: speech service status
+  app.get('/api/voice/status', async (req, res) => {
+    try {
+      const health = await speechService<Record<string, unknown>>('/health', { method: 'GET' });
+      res.json({ available: true, ...health });
+    } catch (error: any) {
+      res.json({ available: false, error: error?.message, speechServiceUrl: SPEECH_SERVICE_URL });
+    }
+  });
+
+  // Dinka voice assistant: one spoken turn (listen -> understand -> reply -> speak in Dinka)
+  app.post('/api/voice/turn', async (req, res) => {
+    try {
+      const {
+        audioBase64,
+        mimeType = 'audio/webm',
+        text,
+        inputLanguage = 'dinka',
+        variety: requestedVariety,
+        history = [],
+      } = req.body;
+      const variety = dinkaVarietyFor(requestedVariety);
+
+      if (!audioBase64 && !(typeof text === 'string' && text.trim())) {
+        res.status(400).json({ error: 'Provide audioBase64 or text' });
+        return;
+      }
+
+      const ai = getGemini();
+
+      let heard = typeof text === 'string' ? text.trim() : '';
+      if (audioBase64) {
+        if (inputLanguage === 'dinka') {
+          heard = await dinkaTranscribe(audioBase64, mimeType, variety);
+        } else {
+          const transcript = await ai.models.generateContent({
+            model: 'gemini-3.8-flash',
+            contents: {
+              parts: [
+                { inlineData: { mimeType, data: audioBase64 } },
+                { text: 'Transcribe this English speech verbatim. Reply with the transcript only.' },
+              ],
+            },
+            config: { temperature: 0 },
+          });
+          heard = (transcript.text || '').trim();
+        }
+      }
+
+      if (!heard) {
+        res.status(422).json({ error: 'I could not hear any speech. Please try again.' });
+        return;
+      }
+
+      const heardEnglish = inputLanguage === 'dinka' ? (await dinkaTranslate(heard, 'dinka', 'english')).translation : heard;
+
+      const systemInstruction = `You are Nile, a friendly voice assistant (like Alexa) for South Sudanese Dinka speakers.
+Your reply will be machine-translated into Dinka and spoken aloud, so:
+- Answer in 1-2 short, simple English sentences (under 35 words).
+- Use plain words and short sentences that translate well. No markdown, lists, emojis, URLs or abbreviations.
+- Write numbers as words.
+- The user's words were transcribed and translated from Dinka by machine, so they may be imperfect; infer the most likely meaning.
+- Be warm and respectful. If you cannot help, say so briefly.`;
+
+      const replyResponse = await ai.models.generateContent({
+        model: 'gemini-3.8-flash',
+        contents: toGeminiContents(Array.isArray(history) ? history : [], heardEnglish),
+        config: { systemInstruction, temperature: 0.4 },
+      });
+      const replyEnglish = (replyResponse.text || '').replace(/[*_#`]/g, '').trim();
+      if (!replyEnglish) {
+        throw new Error('Empty reply from language model');
+      }
+
+      const dinkaReply = await dinkaTranslate(replyEnglish, 'english', 'dinka');
+      const audio = await dinkaSpeak(dinkaReply.translation, variety);
+
+      res.json({
+        heard,
+        heardEnglish,
+        inputLanguage,
+        replyEnglish,
+        replyDinka: dinkaReply.translation,
+        translationEngine: dinkaReply.engine,
+        variety,
+        audioBase64: audio,
+        mimeType: 'audio/wav',
+      });
+    } catch (error: any) {
+      console.error('Voice turn error:', error);
+      res.status(502).json({ error: 'Voice assistant failed', details: error?.message });
+    }
+  });
+
+  // Dinka voice assistant: typed English/Dinka translation with Dinka speech
+  app.post('/api/voice/translate', async (req, res) => {
+    try {
+      const { text, source = 'english', target = 'dinka', variety: requestedVariety, speak = true } = req.body;
+      if (typeof text !== 'string' || !text.trim()) {
+        res.status(400).json({ error: 'text is required' });
+        return;
+      }
+      if (!['english', 'dinka'].includes(source) || !['english', 'dinka'].includes(target) || source === target) {
+        res.status(400).json({ error: "source/target must be 'english' and 'dinka'" });
+        return;
+      }
+      const result = await dinkaTranslate(text, source, target);
+      const dinkaText = target === 'dinka' ? result.translation : text;
+      const audioBase64 = speak ? await dinkaSpeak(dinkaText, dinkaVarietyFor(requestedVariety)) : null;
+      res.json({ ...result, audioBase64, mimeType: 'audio/wav' });
+    } catch (error: any) {
+      console.error('Dinka translate error:', error);
+      res.status(502).json({ error: 'Dinka translation failed', details: error?.message });
     }
   });
 

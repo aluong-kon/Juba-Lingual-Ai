@@ -74,7 +74,12 @@ Ask me questions like:
       const response = await fetch('/api/assistant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: query }),
+        body: JSON.stringify({
+          message: query,
+          conversationHistory: messages
+            .filter((m) => m.id !== 'msg-1' && !m.id.startsWith('ast-err-'))
+            .map((m) => ({ role: m.sender === 'user' ? 'user' : 'model', text: m.text })),
+        }),
       });
 
       if (!response.ok) throw new Error('Assistant API error');
