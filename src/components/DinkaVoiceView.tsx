@@ -51,11 +51,15 @@ export const DinkaVoiceView: React.FC = () => {
   turnsRef.current = turns;
 
   useEffect(() => {
-    fetch('/api/voice/status')
-      .then((r) => r.json())
-      .then(setStatus)
-      .catch(() => setStatus({ available: false, error: 'Server unreachable' }));
+    const refreshStatus = () =>
+      fetch('/api/voice/status')
+        .then((r) => r.json())
+        .then(setStatus)
+        .catch(() => setStatus({ available: false, error: 'Server unreachable' }));
+    refreshStatus();
+    const timer = setInterval(refreshStatus, 15000);
     return () => {
+      clearInterval(timer);
       activeRef.current = false;
       cleanupAudio();
     };
@@ -87,7 +91,7 @@ export const DinkaVoiceView: React.FC = () => {
           body: JSON.stringify({ ...payload, inputLanguage, variety, history: history() }),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.details || data.error || 'Voice assistant failed');
+        if (!res.ok) throw new Error(data.error || 'Voice assistant failed');
 
         const turn: Turn = { id: `turn-${Date.now()}`, ...data };
         setTurns((prev) => [...prev, turn]);
