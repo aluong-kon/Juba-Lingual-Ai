@@ -101,7 +101,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xl font-bold tracking-tight text-white">JubaLingua AI</span>
+                <span className="text-xl font-bold tracking-tight text-white">NileAI</span>
                 <span className="px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider bg-sky-900/70 text-sky-300 border border-sky-700/50">
                   SSD
                 </span>
@@ -149,8 +149,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             { id: 'knowledge_graph', label: 'Knowledge Graph', icon: Network },
             { id: 'speech_database', label: 'Consented Speech', icon: Radio },
             { id: 'conversation', label: 'Live Conversation', icon: MessagesSquare },
-            { id: 'assistant', label: 'AI Assistant', icon: Bot },
-            { id: 'dinka_voice', label: 'Dinka Voice', icon: Radio },
+            { id: 'assistant', label: 'Nile AI Assistant', icon: Bot },
             { id: 'emergency', label: 'Emergency Mode', icon: AlertTriangle, highlight: true },
             { id: 'dictionary', label: 'Community Dictionary', icon: BookOpen },
             { id: 'validation', label: 'Validation Queue', icon: ShieldCheck },

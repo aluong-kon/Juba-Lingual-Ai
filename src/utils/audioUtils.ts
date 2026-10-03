@@ -1,5 +1,5 @@
 /**
- * Client-side audio recording and playback utilities for JubaLingua AI
+ * Client-side audio recording and playback utilities for NileAI
  */
 
 // Convert a Float32Array PCM to 16-bit WAV or base64

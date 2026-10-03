@@ -134,7 +134,7 @@ export const CoverageMatrixView: React.FC = () => {
         <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-start gap-3 text-xs text-slate-300">
           <Info className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
           <p className="leading-relaxed">
-            <strong className="text-white">Strict Linguistic Integrity Policy:</strong> JubaLingua AI explicitly rejects marketing claims 
+            <strong className="text-white">Strict Linguistic Integrity Policy:</strong> NileAI explicitly rejects marketing claims 
             such as "Supports all 64 South Sudanese languages" without validated datasets. An ethnic community designation does not automatically 
             equal a distinct computational language model. We only declare support when authoritative dictionaries, corpora, and native speaker panels are actively verified.
           </p>

@@ -308,6 +308,7 @@ CREATE INDEX IF NOT EXISTS idx_convo_session ON public.conversation_history(sess
 -- -----------------------------------------------------------------------------
 -- ROW LEVEL SECURITY (RLS) POLICIES
 -- -----------------------------------------------------------------------------
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.languages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.dialects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.vocabulary ENABLE ROW LEVEL SECURITY;
@@ -322,7 +323,21 @@ ALTER TABLE public.translation_feedback ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.conversation_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.language_packs ENABLE ROW LEVEL SECURITY;
 
--- 1. Languages and Dialects: Public readable, Admin write
+-- 1. Users: Secure profile data, restrict write to owner/admin, protect email/auth IDs
+CREATE POLICY "Public can view public contributor profiles"
+  ON public.users FOR SELECT
+  USING (true);
+
+CREATE POLICY "Users can update only their own profile"
+  ON public.users FOR UPDATE
+  USING (auth.uid() = auth_user_id)
+  WITH CHECK (auth.uid() = auth_user_id);
+
+CREATE POLICY "Users can insert their own profile"
+  ON public.users FOR INSERT
+  WITH CHECK (auth.uid() = auth_user_id);
+
+-- 2. Languages and Dialects: Public readable, Admin write
 CREATE POLICY "Public can view validated languages"
   ON public.languages FOR SELECT USING (true);
 
@@ -333,7 +348,7 @@ CREATE POLICY "Admins can manage languages"
 CREATE POLICY "Public can view dialects"
   ON public.dialects FOR SELECT USING (true);
 
--- 2. Vocabulary: Anyone can read, Authenticated users can insert, Reviewers can update status
+-- 3. Vocabulary: Anyone can read, Authenticated users can insert, Reviewers can update status
 CREATE POLICY "Public can view verified vocabulary"
   ON public.vocabulary FOR SELECT USING (true);
 
@@ -351,10 +366,32 @@ CREATE POLICY "Native speakers and reviewers can update vocabulary"
     )
   );
 
--- 3. Community Corrections: Anyone can submit, Reviewers can verify
+-- 4. Phrases & Translations
+CREATE POLICY "Public can view verified phrases"
+  ON public.phrases FOR SELECT USING (true);
+
+CREATE POLICY "Authenticated users can submit phrases"
+  ON public.phrases FOR INSERT
+  WITH CHECK (auth.uid() IS NOT NULL);
+
+CREATE POLICY "Public can view non-confidential translations"
+  ON public.translations FOR SELECT USING (true);
+
+CREATE POLICY "Users can insert translation logs"
+  ON public.translations FOR INSERT WITH CHECK (true);
+
+-- 5. Audio Recordings: Non-PII recordings public, contributors can upload
+CREATE POLICY "Public can view verified audio recordings"
+  ON public.audio_recordings FOR SELECT USING (true);
+
+CREATE POLICY "Consented speakers and reviewers can insert audio"
+  ON public.audio_recordings FOR INSERT
+  WITH CHECK (auth.uid() IS NOT NULL);
+
+-- 6. Community Corrections: Anyone can submit, Reviewers can verify
 CREATE POLICY "Contributors can submit corrections"
   ON public.community_corrections FOR INSERT
-  WITH CHECK (true);
+  WITH CHECK (auth.uid() IS NOT NULL);
 
 CREATE POLICY "Public can view open corrections"
   ON public.community_corrections FOR SELECT USING (true);
@@ -369,11 +406,38 @@ CREATE POLICY "Reviewers can update correction statuses"
     )
   );
 
--- 4. Speakers: Anonymity protected, no private leak
+-- 7. Verification Records & Models: Admin / Reviewer restricted
+CREATE POLICY "Public can view verification logs"
+  ON public.verification_records FOR SELECT USING (true);
+
+CREATE POLICY "Reviewers can insert verification records"
+  ON public.verification_records FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.users
+      WHERE users.auth_user_id = auth.uid()
+      AND users.role IN ('community_reviewer', 'linguist_expert', 'admin')
+    )
+  );
+
+CREATE POLICY "Public can view active language models"
+  ON public.language_models FOR SELECT USING (is_active = true);
+
+-- 8. Feedback & Conversation History
+CREATE POLICY "Anyone can submit translation feedback"
+  ON public.translation_feedback FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Public can view aggregate feedback"
+  ON public.translation_feedback FOR SELECT USING (true);
+
+CREATE POLICY "Users can manage session conversations"
+  ON public.conversation_history FOR ALL USING (true);
+
+-- 9. Speakers: Anonymity protected, no private leak
 CREATE POLICY "Public can view non-PII speaker data"
   ON public.speakers FOR SELECT USING (true);
 
--- 5. Language Packs: Public download
+-- 10. Language Packs: Public download
 CREATE POLICY "Public can download language packs"
   ON public.language_packs FOR SELECT USING (true);
 

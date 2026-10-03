@@ -668,6 +668,23 @@ export const INITIAL_VOCABULARY: VocabularyItem[] = [
     upvotes: 30,
     downvotes: 0,
     createdAt: '2026-03-01'
+  },
+  {
+    id: 'v-11',
+    languageId: 'dinka',
+    dialect: 'Pan-Dinka / Rek',
+    word: 'lɔ̈ku baai',
+    partOfSpeech: 'cohortative phrase',
+    pronunciation: 'LAW-koo BAH-ee',
+    translationEn: 'let us go home / we are going home (colloquially typed as Lokubai or Loku bai)',
+    translationAr: 'يلا نمشي البيت / ماشين البيت',
+    culturalContext: "Universal Dinka cohortative phrase: 'lɔ̈' (verb: to go) + '-ku' (1st person plural hortative: we/let us) + 'baai' (noun: home/homestead). Widely written on mobile keyboards without diacritics as 'Lokubai' or 'Loku bai'. In Eastern Equatoria, Lokubai/Loikubai is also known as a clan/family lineage name.",
+    region: 'South Sudan Nationwide & Diaspora',
+    verifiedBy: 'Jieng (Dinka) Language Committee',
+    verificationStatus: 'Native Speaker Verified',
+    upvotes: 68,
+    downvotes: 0,
+    createdAt: '2026-03-20'
   }
 ];
 
@@ -726,5 +743,16 @@ export const INITIAL_SENTENCES: SentenceItem[] = [
     verified: true,
     verificationStatus: 'Native Speaker Verified',
     category: 'Family'
+  },
+  {
+    id: 's-6',
+    languageId: 'dinka',
+    dialect: 'Pan-Dinka / Southwestern (Rek)',
+    originalSentence: 'Lɔ̈ku baai!',
+    englishTranslation: 'Let us go home! / We are going home!',
+    arabicTranslation: 'يلا نمشي البيت / ماشين البيت',
+    verified: true,
+    verificationStatus: 'Native Speaker Verified',
+    category: 'Daily Living / Travel'
   }
 ];

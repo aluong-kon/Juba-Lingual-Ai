@@ -8,8 +8,10 @@ import {
   MicOff, 
   Volume2, 
   Loader2, 
-  BookOpen, 
-  HelpCircle 
+  AlertTriangle,
+  Languages,
+  CheckCircle2,
+  FileCheck
 } from 'lucide-react';
 import { blobToBase64, speakWithBrowser, playBase64Audio } from '../utils/audioUtils';
 
@@ -19,6 +21,7 @@ interface Message {
   text: string;
   audioText?: string;
   timestamp: string;
+  isEmergency?: boolean;
 }
 
 export const AIAssistantView: React.FC = () => {
@@ -26,14 +29,11 @@ export const AIAssistantView: React.FC = () => {
     {
       id: 'msg-1',
       sender: 'assistant',
-      text: `**Mälɛ kɔn / Ita kwayis!** I am your **JubaLingua AI Assistant**.
-I can help you communicate, translate, understand cultural context, and master pronunciation across South Sudanese languages and dialects (Juba Arabic, Dinka, Nuer, Bari, Zande, Shilluk, Acholi, and more).
+      text: `Salam / Mälɛ kɔn / Cïn baai! I am **Nile AI**, a conversational assistant for South Sudan.
 
-Ask me questions like:
-- *"How do I say 'How are you?' in Nuer?"*
-- *"What is the customary way to greet elders in Dinka?"*
-- *"Explain the difference between Bari proper and Kuku variety in Central Equatoria."*
-- *"Teach me 5 essential phrases for working in Malakal or Bentiu."*`,
+I communicate in **Juba Arabic**, **Dinka**, **Nuer**, **Bari**, **Zande**, and **English**, matching the language you write or speak in.
+
+You can ask me questions, speak directly in your mother tongue, or toggle **Emergency Mode** for direct medical, food, or registration action steps.`,
       timestamp: 'Just now',
     },
   ]);
@@ -42,6 +42,8 @@ Ask me questions like:
   const [loading, setLoading] = useState<boolean>(false);
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
+  const [isEmergencyMode, setIsEmergencyMode] = useState<boolean>(false);
+  const [bilingualOutput, setBilingualOutput] = useState<boolean>(false);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -64,6 +66,7 @@ Ask me questions like:
       sender: 'user',
       text: query,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isEmergency: isEmergencyMode,
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -74,11 +77,10 @@ Ask me questions like:
       const response = await fetch('/api/assistant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: JSON.stringify({ 
           message: query,
-          conversationHistory: messages
-            .filter((m) => m.id !== 'msg-1' && !m.id.startsWith('ast-err-'))
-            .map((m) => ({ role: m.sender === 'user' ? 'user' : 'model', text: m.text })),
+          isEmergency: isEmergencyMode,
+          bilingualOutput: bilingualOutput,
         }),
       });
 
@@ -90,6 +92,7 @@ Ask me questions like:
         sender: 'assistant',
         text: data.reply,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isEmergency: isEmergencyMode,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
@@ -175,32 +178,80 @@ Ask me questions like:
   };
 
   const quickPrompts = [
-    'How do I say "How are you?" in Nuer?',
-    'What is the polite greeting for meeting elders in Dinka?',
-    'What does "kwayis" mean in Juba Arabic and how is it used?',
-    'Explain the difference between Bari proper and Kuku variety.',
-    'How to say "Thank you for the meal" in Zande?',
+    { label: 'Juba Arabic: Ita kwayis?', query: 'Salam! Ita kwayis? Kif al-hal fi Juba?' },
+    { label: 'Dinka: Cïn baai?', query: 'Cïn baai! Yïn a pial?' },
+    { label: 'Nuer: Mälɛ kɔn!', query: 'Mälɛ kɔn! Ci jɛŋ bi ku?' },
+    { label: 'Bari: Do kulyan nyon?', query: 'Do kulyan nyon?' },
+    { label: 'Zande: Mo gbia re!', query: 'Mo gbia re ziazia!' },
+    { label: 'Emergency: Medical Help', query: 'Emergency medical aid needed: where is the nearest doctor or hospital?' },
+    { label: 'Emergency: Food/Water', query: 'Where is the emergency food ration and clean drinking water distribution point?' },
   ];
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 h-[calc(100vh-140px)] flex flex-col space-y-4">
-      {/* Header */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center justify-between shadow-md shrink-0">
+      {/* Header with Nile AI Branding & Verification Status */}
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-sky-600 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center shadow">
             <Bot className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-white">South Sudan Cultural & Linguistic Assistant</h2>
-            <p className="text-xs text-slate-400">Ask translation queries, cultural etiquette, or dialect nuances</p>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-bold text-white">Nile AI</h2>
+              <span className="text-[10px] px-2 py-0.5 rounded font-semibold bg-emerald-950 text-emerald-300 border border-emerald-800 flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3" />
+                Phase 1 Verified
+              </span>
+            </div>
+            <p className="text-xs text-slate-400">Juba Arabic • Dinka • Nuer • Bari • Zande • English</p>
           </div>
         </div>
 
-        <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs bg-slate-800 text-sky-300 border border-slate-700">
-          <Sparkles className="w-3.5 h-3.5 text-sky-400" />
-          Grounded with Linguistic Guardrails
-        </span>
+        {/* Operational Controls: Emergency Mode & Responder Review */}
+        <div className="flex items-center gap-2 self-stretch sm:self-auto justify-end">
+          <button
+            onClick={() => setIsEmergencyMode(!isEmergencyMode)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition border ${
+              isEmergencyMode 
+                ? 'bg-rose-950 text-rose-300 border-rose-700 animate-pulse'
+                : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200'
+            }`}
+            title="Toggle immediate medical, food, and registration emergency actions"
+          >
+            <AlertTriangle className={`w-3.5 h-3.5 ${isEmergencyMode ? 'text-rose-400' : 'text-slate-400'}`} />
+            <span>Emergency Mode: {isEmergencyMode ? 'ACTIVE' : 'Off'}</span>
+          </button>
+
+          <button
+            onClick={() => setBilingualOutput(!bilingualOutput)}
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition border ${
+              bilingualOutput 
+                ? 'bg-sky-950 text-sky-300 border-sky-700' 
+                : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200'
+            }`}
+            title="Include English translation alongside local language for field responders"
+          >
+            <FileCheck className="w-3.5 h-3.5" />
+            <span className="hidden md:inline">Responder Review</span>
+          </button>
+        </div>
       </div>
+
+      {/* Emergency Mode Warning Banner when active */}
+      {isEmergencyMode && (
+        <div className="bg-rose-950/60 border border-rose-800/80 rounded-xl px-4 py-2 text-xs text-rose-200 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+            <span><strong>Emergency Mode Activated:</strong> Conversational framing is bypassed. Nile AI outputs immediate, actionable triage directives.</span>
+          </div>
+          <button 
+            onClick={() => setIsEmergencyMode(false)}
+            className="text-[11px] underline text-rose-300 hover:text-rose-100"
+          >
+            Deactivate
+          </button>
+        </div>
+      )}
 
       {/* Chat Messages Container */}
       <div className="flex-1 bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-6 overflow-y-auto space-y-4 shadow-inner">
@@ -223,6 +274,8 @@ Ask me questions like:
                 className={`max-w-[85%] rounded-xl p-4 text-xs leading-relaxed space-y-2 ${
                   isUser
                     ? 'bg-sky-600 text-white shadow-md'
+                    : msg.isEmergency
+                    ? 'bg-rose-950/40 border border-rose-800 text-slate-100 shadow-md'
                     : 'bg-slate-950/80 border border-slate-800 text-slate-200 shadow-md'
                 }`}
               >
@@ -231,7 +284,7 @@ Ask me questions like:
                 {/* Optional Listen Button for Assistant Replies */}
                 {!isUser && (
                   <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
-                    <span className="text-[10px] text-slate-500">{msg.timestamp}</span>
+                    <span className="text-[10px] text-slate-500 tabular-nums">{msg.timestamp}</span>
                     <button
                       onClick={() => handlePlayText(msg.text.slice(0, 150), msg.id)}
                       disabled={playingAudioId === msg.id}
@@ -243,7 +296,7 @@ Ask me questions like:
                       ) : (
                         <Volume2 className="w-3 h-3 text-sky-400" />
                       )}
-                      <span>Pronounce Guide</span>
+                      <span>Audio Pronounce</span>
                     </button>
                   </div>
                 )}
@@ -259,7 +312,7 @@ Ask me questions like:
             </div>
             <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs text-slate-400 flex items-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin text-sky-400" />
-              <span>Analyzing linguistic rules, orthography, and cultural context...</span>
+              <span>Nile AI is processing your message...</span>
             </div>
           </div>
         )}
@@ -269,13 +322,13 @@ Ask me questions like:
 
       {/* Suggested Quick Prompt Pills */}
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none shrink-0">
-        {quickPrompts.map((prompt, i) => (
+        {quickPrompts.map((p, i) => (
           <button
             key={i}
-            onClick={() => handleSendMessage(prompt)}
+            onClick={() => handleSendMessage(p.query)}
             className="text-[11px] px-3 py-1.5 rounded-full bg-slate-850 hover:bg-slate-800 text-slate-300 border border-slate-800 whitespace-nowrap transition"
           >
-            {prompt}
+            {p.label}
           </button>
         ))}
       </div>
@@ -301,7 +354,11 @@ Ask me questions like:
           onKeyDown={(e) => {
             if (e.key === 'Enter') handleSendMessage();
           }}
-          placeholder="Ask in English, Juba Arabic, or any South Sudanese language..."
+          placeholder={
+            isEmergencyMode 
+              ? "Emergency request (medical, food, water, registration)..." 
+              : "Ask or speak in Juba Arabic, Dinka, Nuer, Bari, Zande, or English..."
+          }
           className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
         />
 

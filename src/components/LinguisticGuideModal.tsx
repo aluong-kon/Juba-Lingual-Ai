@@ -57,7 +57,7 @@ export const LinguisticGuideModal: React.FC<LinguisticGuideModalProps> = ({
               Popular discourse often claims South Sudan has "64 tribes" and therefore "64 languages." Linguistically, this is inaccurate. Some ethnic groups speak varieties that linguists classify as dialects of a single language family (e.g. Dinka dialect clusters: Rek, Padang, Agar, Bor; or Bari dialect clusters: Bari proper, Mundari, Pojulu, Kuku, Nyangwara, Kakwa). Conversely, some groups speak distinct endangered isolates.
             </p>
             <p className="font-semibold text-amber-200">
-              JubaLingua AI relies on empirical linguistic research (phonology, syntax, mutual intelligibility), not sociopolitical classifications.
+              NileAI relies on empirical linguistic research (phonology, syntax, mutual intelligibility), not sociopolitical classifications.
             </p>
           </div>
 
@@ -111,7 +111,7 @@ export const LinguisticGuideModal: React.FC<LinguisticGuideModalProps> = ({
               <span>Indigenous Data Sovereignty & Consent</span>
             </h4>
             <p>
-              Indigenous South Sudanese languages are the living cultural heritage of their communities. Voice recordings submitted to JubaLingua AI remain under community intellectual custody. Contributors can opt out, remove recordings, and maintain transparency over how their speech is utilized.
+              Indigenous South Sudanese languages are the living cultural heritage of their communities. Voice recordings submitted to NileAI remain under community intellectual custody. Contributors can opt out, remove recordings, and maintain transparency over how their speech is utilized.
             </p>
           </div>
         </div>

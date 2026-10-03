@@ -302,7 +302,7 @@ export const KnowledgeBaseDashboard: React.FC = () => {
               </div>
             </div>
             <p className="text-sm text-slate-300 max-w-3xl leading-relaxed">
-              JubaLingua AI does not rely exclusively on base LLM memory. We maintain an authoritative linguistic 
+              NileAI does not rely exclusively on base LLM memory. We maintain an authoritative linguistic 
               knowledge base grounded in legally licensed dictionaries, academic grammars, the Dinka Digital Library, 
               the Nuer Lexicon, and community-verified field corpora.
             </p>

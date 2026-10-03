@@ -138,7 +138,7 @@ export const OfflinePacksModal: React.FC<OfflinePacksModalProps> = ({
           <div className="bg-sky-950/40 border border-sky-800/60 rounded-xl p-3 text-xs text-sky-200 flex items-center gap-2">
             <WifiOff className="w-4 h-4 text-sky-400 shrink-0" />
             <span>
-              <strong>Zero-Data Guarantee:</strong> When in remote bomas, payams, or transit centers with no network, JubaLingua AI runs directly on device using downloaded linguistic models.
+              <strong>Zero-Data Guarantee:</strong> When in remote bomas, payams, or transit centers with no network, NileAI runs directly on device using downloaded linguistic models.
             </span>
           </div>
 

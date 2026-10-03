@@ -71,7 +71,7 @@ export const KnowledgeGraphView: React.FC = () => {
             </div>
             <p className="text-sm text-slate-300 max-w-3xl leading-relaxed">
               Explore verified relationships between South Sudanese languages. Instead of isolated translations, 
-              JubaLingua AI connects words through historical cognates, semantic equivalents, loanword layers (Juba Arabic, Swahili, English), 
+              NileAI connects words through historical cognates, semantic equivalents, loanword layers (Juba Arabic, Swahili, English), 
               and shared cultural synsets—all grounded in peer-reviewed linguistic evidence.
             </p>
           </div>

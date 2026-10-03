@@ -77,6 +77,7 @@ export interface WordBreakdown {
   word: string;
   translation: string;
   partOfSpeech: string;
+  evidence?: string;
 }
 
 export interface GroundedEvidence {
@@ -110,6 +111,8 @@ export interface TranslationResponse {
   audioMimeType?: string;
   needsNativeSpeakerValidation?: boolean;
   sourcePriorityLevel?: string;
+  evidenceSource?: string;
+  ipa?: string;
   groundedEvidence?: GroundedEvidence;
   dinkaVarietyUsed?: string;
 }
@@ -333,3 +336,46 @@ export interface AdminMetrics {
   knowledgeGraphNodesCount?: number;
   knowledgeGraphEdgesCount?: number;
 }
+
+export interface ContributionActivity {
+  id: string;
+  type: 'word_verified' | 'audio_uploaded' | 'term_contributed' | 'dialect_reviewed';
+  title: string;
+  nativeText?: string;
+  translation?: string;
+  language: string;
+  dialect?: string;
+  timestamp: string;
+  status: 'verified' | 'pending' | 'consensus' | 'archived';
+  audioBase64?: string;
+  category?: string;
+}
+
+export interface UserContributionStats {
+  userId: string;
+  contributorName: string;
+  contributorRole: string;
+  currentTier: string;
+  tierNumber: number;
+  tierProgress: number; // 0-100 percentage towards next tier
+  nextTierTitle: string;
+  itemsToNextTier: number;
+  totalVerifiedWords: number;
+  totalAudioSamples: number;
+  totalTermsContributed: number;
+  totalDialectReviews: number;
+  streakDays: number;
+  weeklyTarget: number;
+  weeklyCompleted: number;
+  impactRank: string;
+  languageBreakdown: {
+    language: string;
+    languageId: string;
+    verifiedWords: number;
+    audioRecordings: number;
+    percentage: number;
+    color: string;
+  }[];
+  recentActivities: ContributionActivity[];
+}
+
